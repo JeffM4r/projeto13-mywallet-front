@@ -1,12 +1,47 @@
 import styled from "styled-components";
+import {useContext,useState} from "react";
+import {useNavigate} from "react-router-dom";
+import axios from "axios";
+import TokenContext from "./Context";
 
 function NewEntryNegative() {
+    const {token} = useContext(TokenContext);
+    const [isSending,setIsSending] = useState(false);
+    const [form, setForm] = useState({description:"", value:""});
+    const config = { headers: { "authorization": `Bearer ${token}` }};
+    let navigate = useNavigate();
+
+    function sendFailed(){
+        setIsSending(false);
+        alert("não foi possivel enviar, tente de novo")
+    }
+
+    function sendSucces(response){
+        alert("enviado com sucesso")
+        navigate("/registros")
+    }
+
+    function send(body, cadastro){    
+    const promise = axios.post(`http://localhost:5000/negativevalue`, body, cadastro);
+    return promise;
+    }
+
+    function handleSubmit(event){
+        event.preventDefault();
+        if(isSending){return};
+        setIsSending(!isSending);
+        const promise = send(form, config);
+        promise.then(response=>sendSucces(response));
+        promise.catch(response=>sendFailed(response));
+    }
+
+
     return (
         <Main>
             <h1>Nova saída</h1>
-            <form>
-                <Input placeholder="Valor" />
-                <Input placeholder="Descrição" />
+            <form onSubmit={handleSubmit}>
+                <Input required disabled={isSending ? true: false } onChange={(e) => setForm({...form, value: e.target.value.toString().replace(",", ".")})} step="any" placeholder="Valor" />
+                <Input required disabled={isSending ? true: false } onChange={(e) => setForm({...form, description: e.target.value})} type="text" placeholder="Descrição" />
                 <Button>Salvar saída</Button>
             </form>
         </Main>
